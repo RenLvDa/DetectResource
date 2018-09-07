@@ -52,7 +52,9 @@
   </ItemGroup>
   <ItemGroup>
      <Compile Include="Assets\Scripts\FindResources.cs" />
-     <Compile Include="Assets\Scripts\Test.cs" />
+     <Compile Include="Assets\Scripts\FinInActiveGameObject.cs" />
+     <Compile Include="Assets\Scripts\ResourceScanner.cs" />
+     <Compile Include="Assets\Scripts\test2.cs" />
      <Compile Include="Assets\Warrior Pack Bundle 3\Crossbow Warrior Mecanim Animation Pack\Code\IKHands.cs" />
      <Compile Include="Assets\Warrior Pack Bundle 3\Crossbow Warrior Mecanim Animation Pack\Code\Platform.cs" />
      <Compile Include="Assets\Warrior Pack Bundle 3\Crossbow Warrior Mecanim Animation Pack\Code\SmoothFollow.cs" />

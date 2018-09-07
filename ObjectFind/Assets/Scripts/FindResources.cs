@@ -10,13 +10,15 @@ public class FindResources : MonoBehaviour
 
 	enum ResourceType
 	{
-		material      = 0,
-		texture2D     = 1,
-		audioClip     = 2,
-		sprite        = 3,
-		font          = 4,
-		mesh          = 5,
-		animationClip = 6,
+		material      			  = 0,
+		texture2D     			  = 1,
+		audioClip     			  = 2,
+		sprite        			  = 3,
+		font          			  = 4,
+		mesh          			  = 5,
+		animationClip 			  = 6,
+		runtimeAnimatorController = 7,
+		avator					  = 8,
 	}
 
 
@@ -115,6 +117,18 @@ public class FindResources : MonoBehaviour
 			}
 				
 			//Animator
+			Animator[] animators = sceneObjects[i].GetComponentsInChildren<Animator>(true);
+			for (int j = 0; j < animators.Length; j++) {
+				//Runtime Animator Controller
+				if (animators [j].runtimeAnimatorController != null) {
+					AddResource (animators [j].runtimeAnimatorController, animators [j].runtimeAnimatorController.name,
+						ResourceType.runtimeAnimatorController);
+				}
+				//Avator
+				if (animators [j].avatar != null) {
+					AddResource (animators [j].avatar, animators [j].avatar.name, ResourceType.avator);
+				}
+			}
 
 		}
 			
