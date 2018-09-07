@@ -10,7 +10,7 @@ using UnityEngine.UI;
 public class ResourceScanner : EditorWindow {
 
     //菜单入口
-    [MenuItem("UI/SimplePlugDemo")]
+    [MenuItem("UI/ResourceScanner")]
     static void Init() {
 		ResourceScanner window = (ResourceScanner)EditorWindow.GetWindow(typeof(ResourceScanner));
         window.Show();
@@ -57,9 +57,9 @@ public class ResourceScanner : EditorWindow {
         GUILayout.BeginHorizontal();
         GUILayout.Label("保存文件夹路径");
         GUILayout.Label(mSaveFolderPath);
-        if (GUILayout.Button("浏览")) {
+        if (GUILayout.Button("浏览", GUILayout.Width(WIDTH))) {
             //选择文件夹位置
-            Debug.Log("还没弄。");
+            mSaveFolderPath = EditorUtility.OpenFolderPanel("请选择保存文件夹", mSaveFolderPath, mSaveFolderPath.Substring(0, mSaveFolderPath.Length - 1));
         }
         GUILayout.EndHorizontal();
 
@@ -67,9 +67,9 @@ public class ResourceScanner : EditorWindow {
         GUILayout.BeginHorizontal();
         GUILayout.Label("场景文件夹路径");
         GUILayout.Label(mSceneFolderPath);
-        if (GUILayout.Button("浏览")) {
+        if (GUILayout.Button("浏览", GUILayout.Width(WIDTH))) {
             //选择文件夹位置
-            Debug.Log("还没弄。");
+            mSceneNameListFilePath = EditorUtility.OpenFolderPanel("请选择场景文件夹", mSceneNameListFilePath, mSceneNameListFilePath.Substring(0, mSceneNameListFilePath.Length - 1));
         }
         GUILayout.EndHorizontal();
 
