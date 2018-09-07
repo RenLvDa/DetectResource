@@ -35,7 +35,7 @@ public class ResourceScanner : EditorWindow {
     //场景的默认文件路径
     private string mSceneFolderPath = "Assets/02.scene/";
     //保存需要扫描场景名字的列表文件
-    private string mSceneNameListFilePath = "D:/workspace/sceneList.txt";
+    private string mSceneNameListFilePath = "sceneList.txt";
     //用于保存的文件地址
     private string mSaveFolderPath = "D:/workspace/test/";
     //用于保存记录的文件
@@ -60,6 +60,7 @@ public class ResourceScanner : EditorWindow {
         if (GUILayout.Button("浏览", GUILayout.Width(WIDTH))) {
             //选择文件夹位置
             mSaveFolderPath = EditorUtility.OpenFolderPanel("请选择保存文件夹", mSaveFolderPath, mSaveFolderPath.Substring(0, mSaveFolderPath.Length - 1));
+            mSaveFolderPath += "/";
         }
         GUILayout.EndHorizontal();
 
@@ -69,18 +70,19 @@ public class ResourceScanner : EditorWindow {
         GUILayout.Label(mSceneFolderPath);
         if (GUILayout.Button("浏览", GUILayout.Width(WIDTH))) {
             //选择文件夹位置
-            mSceneNameListFilePath = EditorUtility.OpenFolderPanel("请选择场景文件夹", mSceneNameListFilePath, mSceneNameListFilePath.Substring(0, mSceneNameListFilePath.Length - 1));
+            mSceneFolderPath = EditorUtility.OpenFolderPanel("请选择场景文件夹", mSceneFolderPath, mSceneFolderPath.Substring(0, mSceneFolderPath.Length - 1));
+            mSceneFolderPath += "/";
         }
         GUILayout.EndHorizontal();
 
-        //扫描功能按键
+        //扫描资源功能按键
         GUILayout.BeginHorizontal();
-        bool scanBtn = GUILayout.Button("扫描当前场景");
-        bool scanSaveBtn = GUILayout.Button("扫描当前场景并保存");
+        bool scanBtn = GUILayout.Button("扫描当前场景资源");
+        bool scanSaveBtn = GUILayout.Button("扫描当前场景资源");
         GUILayout.EndHorizontal();
         GUILayout.BeginHorizontal();
-        bool scanListBtn = GUILayout.Button("扫描列表中所有场景（整合统计）");
-        bool scanListSaveBtn = GUILayout.Button("扫描列表中所有场景（分别保存）");
+        bool scanListBtn = GUILayout.Button("扫描列表(senceList)中所有场景（整合统计）");
+        bool scanListSaveBtn = GUILayout.Button("扫描列表(sceneList)中所有场景（分别保存）");
         GUILayout.EndHorizontal();
         //核心功能，扫描当前场景，统计资源使用情况
         if (scanBtn) {
@@ -88,24 +90,18 @@ public class ResourceScanner : EditorWindow {
             BuildResourceList(nowScene);
         }
 
-		//扫描当前场景，统计未激活的GameObject
-		if (GUILayout.Button("ScanInActive")) {
-			Scene nowScene = EditorSceneManager.GetActiveScene();
-			ClearResourceList ();
-			BuildInActiveResourceList (nowScene);
-		}
-
+        //扫描资源并保存（按场景名）
         if (scanSaveBtn) {
             Scene nowScene = EditorSceneManager.GetActiveScene();
             BuildResourceList(nowScene);
-            if (SaveToFile(mSaveFolderPath, nowScene.name)) {
+            if (SaveResToFile(mSaveFolderPath, nowScene.name)) {
                 Debug.Log("保存成功");
             }
         }
 
         //扫描提供名字的场景中的所有的资源引用
         if (scanListBtn) {
-            string[] nameOfScenes = GetNameOfFilesToScan(mSceneNameListFilePath);
+            string[] nameOfScenes = GetNameOfFilesToScan(mSaveFolderPath + mSceneNameListFilePath);
             float progress = 0f;
             float progressStep = 1.0f / nameOfScenes.Length;
             for (int i = 0; i < nameOfScenes.Length; i++) {
@@ -118,14 +114,14 @@ public class ResourceScanner : EditorWindow {
 
         //对每个提供名字的场景依次扫描并按场景名保存为文件
         if (scanListSaveBtn) {
-            string[] nameOfScenes = GetNameOfFilesToScan(mSceneNameListFilePath);
+            string[] nameOfScenes = GetNameOfFilesToScan(mSaveFolderPath + mSceneNameListFilePath);
             float progress = 0f;
             float progressStep = 1.0f / nameOfScenes.Length;
             for (int i = 0; i < nameOfScenes.Length; i++) {
                 EditorUtility.DisplayProgressBar("扫描中", nameOfScenes[i], progress += progressStep);
                 Scene scene = EditorSceneManager.GetSceneByPath(mSceneFolderPath + nameOfScenes[i] + ".unity");
                 BuildResourceList(scene);
-                if (SaveToFile(mSaveFolderPath, scene.name)) {
+                if (SaveResToFile(mSaveFolderPath, scene.name)) {
                     Debug.Log("保存成功");
                 }
                 ClearResourceList();
@@ -136,19 +132,19 @@ public class ResourceScanner : EditorWindow {
 
         //保存到文件
         if (GUILayout.Button("保存到文件(default.csv)")) {
-            if (SaveToFile(mSaveFileName)) {
+            if (SaveResToFile(mSaveFolderPath + mSaveFileName)) {
                 Debug.Log("保存成功");
             }
         }
 
         //从文件中读取
         if (GUILayout.Button("从文件中加载(default.csv)")) {
-            if (LoadFromFile(mSaveFileName)) {
+            if (LoadFromFile(mSaveFolderPath + mSaveFileName)) {
                 Debug.Log("加载成功");
             }
         }
 
-        //展示扫描结果
+        //展示扫描资源使用情况结果
         if (mResourceList.Count > 0 && mResourceList.Count < 50) {
             GUILayout.Label("扫描结果（最多显示50条）");
             //表头
@@ -184,15 +180,45 @@ public class ResourceScanner : EditorWindow {
             }
         }
 
-		//展示扫描结果
-		if (mInActiveList.Count > 0 && mInActiveList.Count < 50) {
+        //扫描资源功能按键
+        GUILayout.BeginHorizontal();
+        bool scanObjBtn = GUILayout.Button("扫描当前场景中未激活对象");
+        bool scanListResAndObjSaveBtn = GUILayout.Button("扫描列表中所有场景的资源和未激活对象并保存");
+        GUILayout.EndHorizontal();
+        //扫描当前场景，统计未激活的GameObject
+        if (scanObjBtn) {
+            Scene nowScene = EditorSceneManager.GetActiveScene();
+            ClearResourceList();
+            BuildInActiveResourceList(nowScene);
+        }
+
+        //扫描列表中的所有资源和未激活对象并保存
+        if (scanListResAndObjSaveBtn) {
+            string[] nameOfScenes = GetNameOfFilesToScan(mSaveFolderPath + mSceneNameListFilePath);
+            float progress = 0f;
+            float progressStep = 1.0f / nameOfScenes.Length;
+            for (int i = 0; i < nameOfScenes.Length; i++) {
+                EditorUtility.DisplayProgressBar("扫描中", nameOfScenes[i], progress += progressStep);
+                Scene scene = EditorSceneManager.GetSceneByPath(mSceneFolderPath + nameOfScenes[i] + ".unity");
+                BuildResourceList(scene);
+                BuildInActiveResourceList(scene);
+                if (SaveResAndObjToFile(mSaveFolderPath, scene.name)) {
+                    Debug.Log("保存成功");
+                }
+                ClearResourceList();
+            }
+            EditorUtility.ClearProgressBar();
+        }
+
+        //展示扫描未激活对象结果
+        if (mInActiveList.Count > 0 && mInActiveList.Count < 50) {
 			GUILayout.Label("扫描结果（最多显示50条）");
 			GUILayout.BeginHorizontal();
 			GUILayout.Label("对象名称", GUILayout.Width(WIDTH));
 			GUILayout.Label("对象路径", GUILayout.Width(WIDTH));
 			GUILayout.EndHorizontal();
 			//列表显示内容
-			mScrollPos = GUILayout.BeginScrollView(mScrollPos, GUILayout.Width(WIDTH * 3 + 30));
+			mScrollPos = GUILayout.BeginScrollView(mScrollPos, GUILayout.Width(WIDTH * 2 + 20));
 			//列表显示内容
 			for (int i = 0; i < mInActiveList.Count; i++) {
 				GUILayout.BeginHorizontal();
@@ -207,7 +233,6 @@ public class ResourceScanner : EditorWindow {
 				ClearResourceList();
 			}
 		}
-
 
     }
 
@@ -236,9 +261,17 @@ public class ResourceScanner : EditorWindow {
         if (resource == null)
             return;
         //获取资源地址作为key值
-        string path = AssetDatabase.GetAssetPath(resource);
-        if (mResourceDict.ContainsKey(path)) {
-            ResourceHolder resourceHolder = mResourceDict[path];
+        string path;
+        string key;
+        if(type == MATERIAL) {
+            key = name;
+            path = "No Path";
+        } else {
+            path = AssetDatabase.GetAssetPath(resource);
+            key = path;
+        }
+        if (mResourceDict.ContainsKey(key)) {
+            ResourceHolder resourceHolder = mResourceDict[key];
             resourceHolder.ResourceUseCount++;
             //对于场景名，目前看来似乎没有需要全部都显示的必要，所以先不做了
         } else {
@@ -250,7 +283,7 @@ public class ResourceScanner : EditorWindow {
                 ResourceUseCount = 1,
                 UseSceneName = sceneName
             };
-            mResourceDict.Add(path, resourceHolder);
+            mResourceDict.Add(key, resourceHolder);
             mResourceList.Add(resourceHolder);
         }
     }
@@ -386,19 +419,19 @@ public class ResourceScanner : EditorWindow {
 	//构建资源列表 场景中未激活的gameobject
 	private void BuildInActiveResourceList(Scene targetScene){
 		GameObject[] allSceneGameObject = (GameObject[]) targetScene.GetRootGameObjects ();
-		List<GameObject> inActiveGameObject = new List<GameObject> ();
 		for (int i = 0; i < allSceneGameObject.Length; i++) {
 			FindInActive (allSceneGameObject [i],allSceneGameObject [i].name);
 		}
 	}
 
     //文件保存和加载
-    //保存文件到目标名字，会对文件进行编号，对于已经存在的文件，会迭代编号创建新文件
-    private bool SaveToFile(string folderPath, string fileName) {
-        int count = 1;
-        string partPath = folderPath + fileName + "_";
+    //保存资源到目标文件目录的文件，会对文件进行编号，对于已经存在的文件，会迭代编号创建新文件
+    private bool SaveResToFile(string folderPath, string fileName) {
+        int count = 0;
+        string partPath = folderPath + fileName + "_resource_";
         string path = partPath;
         do {
+            count++;
             path = partPath + count.ToString() + ".csv";
         } while (File.Exists(path));
         using (TextWriter textWriter = File.CreateText(path)) {
@@ -407,14 +440,36 @@ public class ResourceScanner : EditorWindow {
         }
         return true;
     }
-    //直接保存到指定文件
-    private bool SaveToFile(string filePath) {
+
+    //直接保存资源到指定文件
+    private bool SaveResToFile(string filePath) {
+        Debug.Log(filePath);
         using (TextWriter textWriter = File.CreateText(filePath)) {
                 string text = EncodeResourceList();
                 textWriter.Write(text);
             }
         return true;
     }
+
+    //同时保存资源使用情况和对象激活情况
+    private bool SaveResAndObjToFile(string folderPath, string fileName) {
+        int count = 0;
+        string partPath = folderPath + fileName + "_resource_";
+        string resPath = partPath;
+        do {
+            count ++;
+            resPath = partPath + count.ToString() + ".csv";
+        } while (File.Exists(resPath));
+        string objPath = folderPath + fileName + "_object_" + count.ToString() + ".csv";
+        using (TextWriter resTextWriter = File.CreateText(resPath), objTextWriter = File.CreateText(objPath)) {
+            string resText = EncodeResourceList();
+            string objText = EncodeObjList();
+            resTextWriter.Write(resText);
+            objTextWriter.Write(objText);
+        }
+        return true;
+    }
+
     //从指定文件中加载内容
     private bool LoadFromFile(string filePath) {
         ClearResourceList();
@@ -427,10 +482,16 @@ public class ResourceScanner : EditorWindow {
     //数据编码解码
     private string EncodeResourceList() {
         System.Text.StringBuilder stringBuilder = new System.Text.StringBuilder();
-        for(int i = 0; i < mResourceList.Count; i++) {
+        stringBuilder.Append("资源路径").Append(',')
+            .Append("资源名称").Append(',')
+            .Append("资源类型").Append(',')
+            .Append("资源被使用场景").Append(',')
+            .Append("资源使用次数").Append('\n');
+        for (int i = 0; i < mResourceList.Count; i++) {
             stringBuilder.Append(mResourceList[i].ResourcePath).Append(',')
                 .Append(mResourceList[i].ResourceName).Append(',')
                 .Append(mResourceList[i].ResourceType).Append(',')
+                .Append(mResourceList[i].UseSceneName).Append(',')
                 .Append(mResourceList[i].ResourceUseCount).Append('\n');
         }
         stringBuilder.Remove(stringBuilder.Length - 1, 1);
@@ -439,7 +500,7 @@ public class ResourceScanner : EditorWindow {
 
     private void DecodeResourceList(string text) {
         string[] allResourceStrs = text.Split('\n');
-        for(int i = 0; i < allResourceStrs.Length; i++) {
+        for (int i = 1; i < allResourceStrs.Length; i++) {
             string[] resourceStr = allResourceStrs[i].Split(',');
             if(resourceStr.Length == 4) {
                 ResourceHolder resourceHolder = new ResourceHolder() {
@@ -452,6 +513,18 @@ public class ResourceScanner : EditorWindow {
                 mResourceList.Add(resourceHolder);
             }
         }
+    }
+
+    private string EncodeObjList() {
+        System.Text.StringBuilder stringBuilder = new System.Text.StringBuilder();
+        stringBuilder.Append("对象名称").Append(',')
+            .Append("对象路径（场景内）").Append('\n');
+        for (int i = 0; i < mInActiveList.Count; i++) {
+            stringBuilder.Append(mInActiveList[i].inActiveObject.name).Append(',')
+                .Append(mInActiveList[i].path).Append('\n');
+        }
+        stringBuilder.Remove(stringBuilder.Length - 1, 1);
+        return stringBuilder.ToString();
     }
 
     //保存资源相关信息
